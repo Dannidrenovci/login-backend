@@ -8,6 +8,15 @@ mongoose.connect('mongodb+srv://<username>:<password>@<cluster-url>/saas?retryWr
 .then(() => console.log('✅ Connected to MongoDB'))
 .catch(err => console.error('❌ MongoDB connection error:', err));
 
+const mongoose = require('mongoose');
+
+const userSchema = new mongoose.Schema({
+  email: String,
+  password: String
+});
+
+const User = mongoose.model('User', userSchema);
+
 
 const express = require('express');
 const bodyParser = require('body-parser');
