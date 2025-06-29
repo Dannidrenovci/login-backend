@@ -1,15 +1,20 @@
+const express = require('express');
+const bodyParser = require('body-parser');
+const cors = require('cors');
 const mongoose = require('mongoose');
 
-// Replace <username>, <password>, and <cluster-url> with your real info
-mongoose.connect('mongodb+srv://<username>:<password>@<cluster-url>/saas?retryWrites=true&w=majority&appName=Cluster0', {
+const app = express();
+const PORT = 3000;
+
+// ✅ Connect to MongoDB
+mongoose.connect('mongodb+srv://admin:123@saas.nx1pfat.mongodb.net/?retryWrites=true&w=majority&appName=saas', {
   useNewUrlParser: true,
   useUnifiedTopology: true
 })
 .then(() => console.log('✅ Connected to MongoDB'))
 .catch(err => console.error('❌ MongoDB connection error:', err));
 
-const mongoose = require('mongoose');
-
+// ✅ Mongoose User model
 const userSchema = new mongoose.Schema({
   email: String,
   password: String
@@ -17,23 +22,15 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
-
-const express = require('express');
-const bodyParser = require('body-parser');
-const cors = require('cors');
-
-const app = express();
-const PORT = 3000;
-
+// ✅ Middleware
 app.use(cors());
 app.use(bodyParser.json());
 
-// ✅ In-memory user store (temporary, just for testing)
+// ✅ Login Route (still uses memory, we’ll update next)
 const users = [
   { email: 'test@example.com', password: 'password123' }
 ];
 
-// ✅ Login Route
 app.post('/login', (req, res) => {
   const { email, password } = req.body;
 
@@ -46,22 +43,28 @@ app.post('/login', (req, res) => {
   }
 });
 
-// ✅ Signup Route
-app.post('/signup', (req, res) => {
+// ✅ Signup Route (now uses MongoDB!)
+app.post('/signup', async (req, res) => {
   const { email, password } = req.body;
 
-  const existingUser = users.find(u => u.email === email);
+  try {
+    const existingUser = await User.findOne({ email });
 
-  if (existingUser) {
-    return res.status(400).json({ success: false, message: 'Email already registered' });
+    if (existingUser) {
+      return res.status(400).json({ success: false, message: 'Email already registered' });
+    }
+
+    const newUser = new User({ email, password });
+    await newUser.save();
+
+    res.json({ success: true, message: 'Signup successful' });
+  } catch (err) {
+    console.error('Signup error:', err);
+    res.status(500).json({ success: false, message: 'Something went wrong' });
   }
-
-  users.push({ email, password });
-  res.json({ success: true, message: 'Signup successful' });
 });
 
 // ✅ Start the server
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
-
