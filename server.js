@@ -1,3 +1,14 @@
+const mongoose = require('mongoose');
+
+// Replace <username>, <password>, and <cluster-url> with your real info
+mongoose.connect('mongodb+srv://<username>:<password>@<cluster-url>/saas?retryWrites=true&w=majority&appName=Cluster0', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+.then(() => console.log('✅ Connected to MongoDB'))
+.catch(err => console.error('❌ MongoDB connection error:', err));
+
+
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
