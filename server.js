@@ -4,46 +4,46 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // ✅ Connect to MongoDB
-mongoose.connect('mongodb+srv://admin:123@saas.nx1pfat.mongodb.net/?retryWrites=true&w=majority&appName=saas', {
+mongoose.connect('mongodb+srv://admin:123@saas.nx1pfat.mongodb.net/saas?retryWrites=true&w=majority&appName=saas', {
   useNewUrlParser: true,
   useUnifiedTopology: true
 })
 .then(() => console.log('✅ Connected to MongoDB'))
 .catch(err => console.error('❌ MongoDB connection error:', err));
 
-// ✅ Mongoose User model
+// ✅ Define User schema and model
 const userSchema = new mongoose.Schema({
   email: String,
   password: String
 });
-
 const User = mongoose.model('User', userSchema);
 
 // ✅ Middleware
 app.use(cors());
 app.use(bodyParser.json());
 
-// ✅ Login Route (still uses memory, we’ll update next)
-const users = [
-  { email: 'test@example.com', password: 'password123' }
-];
-
-app.post('/login', (req, res) => {
+// ✅ Login Route (uses MongoDB)
+app.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
-  const user = users.find(u => u.email === email && u.password === password);
+  try {
+    const user = await User.findOne({ email, password });
 
-  if (user) {
-    res.json({ success: true, message: 'Logged in successfully!' });
-  } else {
-    res.status(401).json({ success: false, message: 'Invalid credentials' });
+    if (user) {
+      res.json({ success: true, message: 'Logged in successfully!' });
+    } else {
+      res.status(401).json({ success: false, message: 'Invalid credentials' });
+    }
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).json({ success: false, message: 'Something went wrong' });
   }
 });
 
-// ✅ Signup Route (now uses MongoDB!)
+// ✅ Signup Route (uses MongoDB)
 app.post('/signup', async (req, res) => {
   const { email, password } = req.body;
 
@@ -66,5 +66,5 @@ app.post('/signup', async (req, res) => {
 
 // ✅ Start the server
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
